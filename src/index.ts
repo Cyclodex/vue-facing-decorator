@@ -8,8 +8,10 @@ export { decorator as Emit } from './option/emit'
 export { decorator as VModel, decorator as Model } from './option/vmodel'
 export { decorator as Vanilla } from './option/vanilla'
 export { decorator as Hook } from './option/methodsAndHooks'
-import type {
-    ComponentPublicInstance
+
+import {
+    ComponentPublicInstance,
+    defineComponent
 } from 'vue'
 const IdentifySymbol = Symbol('vue-facing-decorator-identify')
 export interface BaseTypeIdentify {
@@ -31,3 +33,22 @@ export const Base = class { } as {
 }
 export const Vue = Base
 
+export function options<T extends (typeof Vue) | Object>(data: (T & { __vccOpts?: any })) {
+
+
+    type C = T extends typeof Vue ?
+        {
+            data: { [index in keyof InstanceType<T> as InstanceType<T>[index] extends Function ? never : index]: InstanceType<T>[index]
+
+            }
+            methods: { [index in keyof InstanceType<T> as InstanceType<T>[index] extends Function ? index : never]: InstanceType<T>[index] }
+
+        }
+        : any
+
+    let opt: any = data
+    if (typeof data === 'function' && data.prototype instanceof Vue && '__vccOpts' in data) {
+        opt = data['__vccOpts']
+    }
+    return defineComponent<any,any,C['data'],any,C['methods'],any,any,any,any>(opt as C)
+}
